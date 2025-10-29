@@ -14,6 +14,7 @@ struct ContentView: View {
                 Circle()
                     .fill(audioRecorder.isRecording ? Color.red : Color(hex: settingsManager.buttonColor))
                     .frame(width: settingsManager.buttonSize.size, height: settingsManager.buttonSize.size)
+                    .glassEffect()
                     .shadow(radius: 8)
                 
                 if audioRecorder.isRecording {
