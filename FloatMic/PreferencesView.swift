@@ -117,6 +117,28 @@ struct PreferencesView: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 8) {
+                    Text("Multi-Display Settings")
+                        .fontWeight(.medium)
+                    
+                    VStack(alignment: .leading, spacing: 12) {
+                        Picker("Display Mode", selection: Binding(
+                            get: { settingsManager.multiDisplayMode },
+                            set: { settingsManager.setMultiDisplayMode($0) }
+                        )) {
+                            ForEach(SettingsManager.MultiDisplayMode.allCases, id: \.self) { mode in
+                                Text(mode.rawValue).tag(mode)
+                            }
+                        }
+                        .pickerStyle(MenuPickerStyle())
+                        
+                        Text(settingsManager.multiDisplayMode.description)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                
+                VStack(alignment: .leading, spacing: 8) {
                     Text("About FloatMic")
                         .fontWeight(.medium)
                     

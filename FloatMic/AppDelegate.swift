@@ -176,7 +176,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .environmentObject(settingsManager!)
         
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 500, height: 400),
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 500),
             styleMask: [.titled, .closable, .resizable],
             backing: .buffered,
             defer: false
@@ -191,22 +191,42 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Window Position Persistence
     
     private func loadWindowPosition() -> NSPoint? {
-        let x = UserDefaults.standard.double(forKey: "floatingWindowX")
-        let y = UserDefaults.standard.double(forKey: "floatingWindowY")
+        guard let settings = settingsManager else { return nil }
         
-        // Check if position is valid (within screen bounds)
-        if x != 0 || y != 0 {
-            let point = NSPoint(x: x, y: y)
-            if isPositionValid(point) {
-                return point
+        switch settings.multiDisplayMode {
+        case .rememberPerDisplay:
+            let displayID = settings.getCurrentDisplayID()
+            if let position = settings.getPositionForDisplay(displayID) {
+                return isPositionValid(position) ? position : nil
             }
+            return nil
+            
+        case .constrainToVisible:
+            let x = UserDefaults.standard.double(forKey: "floatingWindowX")
+            let y = UserDefaults.standard.double(forKey: "floatingWindowY")
+            if x != 0 || y != 0 {
+                let point = NSPoint(x: x, y: y)
+                return isPositionValid(point) ? point : nil
+            }
+            return nil
+            
+        case .alwaysCenter:
+            return nil // Will center on main display
         }
-        return nil
     }
     
     private func saveWindowPosition(_ point: NSPoint) {
-        UserDefaults.standard.set(point.x, forKey: "floatingWindowX")
-        UserDefaults.standard.set(point.y, forKey: "floatingWindowY")
+        guard let settings = settingsManager else { return }
+        
+        switch settings.multiDisplayMode {
+        case .rememberPerDisplay:
+            let displayID = settings.getCurrentDisplayID()
+            settings.setPositionForDisplay(point, displayID: displayID)
+            
+        case .constrainToVisible, .alwaysCenter:
+            UserDefaults.standard.set(point.x, forKey: "floatingWindowX")
+            UserDefaults.standard.set(point.y, forKey: "floatingWindowY")
+        }
     }
     
     private func isPositionValid(_ point: NSPoint) -> Bool {
