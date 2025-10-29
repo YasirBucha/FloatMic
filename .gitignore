@@ -22,6 +22,12 @@ DerivedData/
 FloatMicApp/
 whisper/whisper.cpp/
 
+# Large binary files (use Git LFS or download separately)
+*.dylib
+*.bin
+whisper/framework/Whisper.framework/*.dylib
+whisper/models/*.bin
+
 # macOS
 .DS_Store
 .AppleDouble
