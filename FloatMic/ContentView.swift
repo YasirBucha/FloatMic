@@ -4,13 +4,14 @@ struct ContentView: View {
     @EnvironmentObject var audioRecorder: AudioRecorder
     @EnvironmentObject var transcriptionManager: TranscriptionManager
     @EnvironmentObject var apiManager: APIManager
+    @State private var lastTapTime = Date()
     
     var body: some View {
         ZStack {
             // Floating microphone button
             ZStack {
                 Circle()
-                    .fill(audioRecorder.isRecording ? Color.red : Color.blue)
+                    .fill(audioRecorder.isRecording ? Color.red : Color(hex: "aaca52"))
                     .frame(width: 80, height: 80)
                     .shadow(radius: 8)
                 
@@ -31,8 +32,12 @@ struct ContentView: View {
             .scaleEffect(audioRecorder.isRecording ? 1.1 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: audioRecorder.isRecording)
             .onTapGesture {
-                // Handle tap for recording toggle
-                audioRecorder.toggleRecording()
+                // Only toggle recording if it's a quick tap (not a drag)
+                let now = Date()
+                if now.timeIntervalSince(lastTapTime) < 0.3 {
+                    audioRecorder.toggleRecording()
+                }
+                lastTapTime = now
             }
             
             // Toast overlay
