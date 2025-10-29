@@ -58,14 +58,14 @@ class AudioRecorder: NSObject, ObservableObject {
             recordingDuration = 0
             
             // Start timer for duration
-            recordingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
-                self.recordingDuration += 0.1
+            recordingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+                self?.recordingDuration += 0.1
             }
             
             // Start timer for audio level monitoring
-            audioLevelTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
-                self.audioRecorder?.updateMeters()
-                self.audioLevel = self.audioRecorder?.averagePower(forChannel: 0) ?? 0.0
+            audioLevelTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+                self?.audioRecorder?.updateMeters()
+                self?.audioLevel = self?.audioRecorder?.averagePower(forChannel: 0) ?? 0.0
             }
             
         } catch {
@@ -79,6 +79,10 @@ class AudioRecorder: NSObject, ObservableObject {
         audioRecorder?.stop()
         recordingTimer?.invalidate()
         audioLevelTimer?.invalidate()
+        
+        // Clean up timers
+        recordingTimer = nil
+        audioLevelTimer = nil
         
         isRecording = false
         audioLevel = 0.0
@@ -99,6 +103,11 @@ class AudioRecorder: NSObject, ObservableObject {
     
     func getRecordingURL() -> URL? {
         return recordingURL
+    }
+    
+    deinit {
+        stopRecording()
+        audioRecorder = nil
     }
 }
 

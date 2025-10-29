@@ -93,8 +93,18 @@ class TranscriptionManager: ObservableObject {
     }
     
     private func transcribeWithWhisperLocal(audioURL: URL) async throws -> String {
-        // Placeholder for local Whisper.cpp
-        throw TranscriptionError.serviceNotAvailable("Local Whisper")
+        // Use the actual WhisperLocalService
+        let whisperService = WhisperLocalService()
+        
+        guard whisperService.initialize() else {
+            throw TranscriptionError.serviceNotAvailable("Local Whisper - Failed to initialize")
+        }
+        
+        guard let result = whisperService.transcribeAudioFile(url: audioURL) else {
+            throw TranscriptionError.serviceNotAvailable("Local Whisper - Transcription failed")
+        }
+        
+        return result
     }
     
     private func copyToClipboard(text: String) {

@@ -172,4 +172,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.center()
         window.makeKeyAndOrderFront(nil)
     }
+    
+    deinit {
+        // Clean up resources
+        audioRecorder = nil
+        transcriptionManager = nil
+        apiManager = nil
+        historyManager = nil
+        floatingWindow = nil
+        statusItem = nil
+    }
 }
