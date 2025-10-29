@@ -4,6 +4,7 @@ struct ContentView: View {
     @EnvironmentObject var audioRecorder: AudioRecorder
     @EnvironmentObject var transcriptionManager: TranscriptionManager
     @EnvironmentObject var apiManager: APIManager
+    @EnvironmentObject var settingsManager: SettingsManager
     @State private var lastTapTime = Date()
     
     var body: some View {
@@ -11,22 +12,22 @@ struct ContentView: View {
             // Floating microphone button
             ZStack {
                 Circle()
-                    .fill(audioRecorder.isRecording ? Color.red : Color(hex: "aaca52"))
-                    .frame(width: 80, height: 80)
+                    .fill(audioRecorder.isRecording ? Color.red : Color(hex: settingsManager.buttonColor))
+                    .frame(width: settingsManager.buttonSize.size, height: settingsManager.buttonSize.size)
                     .shadow(radius: 8)
                 
                 if audioRecorder.isRecording {
                     // Pulsing animation when recording
                     Circle()
                         .stroke(Color.red, lineWidth: 3)
-                        .frame(width: 80, height: 80)
+                        .frame(width: settingsManager.buttonSize.size, height: settingsManager.buttonSize.size)
                         .scaleEffect(audioRecorder.isRecording ? 1.2 : 1.0)
                         .opacity(audioRecorder.isRecording ? 0.6 : 0.0)
                         .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: audioRecorder.isRecording)
                 }
                 
                 Image(systemName: audioRecorder.isRecording ? "stop.fill" : "mic.fill")
-                    .font(.system(size: 32))
+                    .font(.system(size: settingsManager.buttonSize.iconSize))
                     .foregroundColor(.white)
             }
             .scaleEffect(audioRecorder.isRecording ? 1.1 : 1.0)
@@ -48,7 +49,7 @@ struct ContentView: View {
                 )
             }
         }
-        .frame(width: 100, height: 100)
+        .frame(width: settingsManager.buttonSize.size, height: settingsManager.buttonSize.size)
         .background(Color.clear)
         .onChange(of: audioRecorder.isRecording) { isRecording in
             if !isRecording, let recordingURL = audioRecorder.getRecordingURL() {

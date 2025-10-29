@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PreferencesView: View {
     @EnvironmentObject var apiManager: APIManager
+    @EnvironmentObject var settingsManager: SettingsManager
     @State private var selectedService: APIManager.ServiceType
     
     init() {
@@ -62,6 +63,57 @@ struct PreferencesView: View {
                         }
                     }
                     .padding(.leading, 16)
+                }
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Button Settings")
+                        .fontWeight(.medium)
+                    
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("Size:")
+                            Picker("Button Size", selection: Binding(
+                                get: { settingsManager.buttonSize },
+                                set: { settingsManager.setButtonSize($0) }
+                            )) {
+                                ForEach(SettingsManager.ButtonSize.allCases, id: \.self) { size in
+                                    Text(size.rawValue).tag(size)
+                                }
+                            }
+                            .pickerStyle(SegmentedPickerStyle())
+                        }
+                        
+                        HStack {
+                            Text("Color:")
+                            TextField("Hex Color", text: Binding(
+                                get: { settingsManager.buttonColor },
+                                set: { settingsManager.setButtonColor($0) }
+                            ))
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .frame(width: 100)
+                            
+                            Circle()
+                                .fill(Color(hex: settingsManager.buttonColor))
+                                .frame(width: 20, height: 20)
+                        }
+                        
+                        Toggle("Enable Edge Snapping", isOn: Binding(
+                            get: { settingsManager.enableEdgeSnapping },
+                            set: { settingsManager.setEdgeSnapping($0) }
+                        ))
+                        
+                        if settingsManager.enableEdgeSnapping {
+                            HStack {
+                                Text("Snap Distance:")
+                                Slider(value: Binding(
+                                    get: { settingsManager.snapThreshold },
+                                    set: { settingsManager.setSnapThreshold($0) }
+                                ), in: 10...50)
+                                Text("\(Int(settingsManager.snapThreshold))px")
+                                    .frame(width: 40)
+                            }
+                        }
+                    }
                 }
                 
                 VStack(alignment: .leading, spacing: 8) {
