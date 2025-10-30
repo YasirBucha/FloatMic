@@ -6,6 +6,8 @@ class TranscriptionManager: ObservableObject {
     @Published var lastTranscription = ""
     @Published var showToast = false
     @Published var toastMessage = ""
+    @Published var showStatusBanner = false
+    @Published var statusMessage = ""
     
     private let apiManager: APIManager
     private let historyManager: TranscriptionHistoryManager
@@ -29,11 +31,13 @@ class TranscriptionManager: ObservableObject {
                     self.copyToClipboard(text: result)
                     self.addToHistory(text: result)
                     self.showToast(message: "Transcription copied to clipboard")
+                    self.showStatusBanner = false
                     self.isTranscribing = false
                 }
             } catch {
                 await MainActor.run {
-                    self.showToast(message: "Transcription failed: \(error.localizedDescription)")
+                    self.showStatus("Transcription failed. \(error.localizedDescription)")
+                    self.showToast(message: "Transcription failed")
                     self.isTranscribing = false
                 }
             }
@@ -45,10 +49,11 @@ class TranscriptionManager: ObservableObject {
         
         for service in availableServices {
             do {
+                await MainActor.run { self.showStatus("Using \(service.rawValue)...") }
                 let result = try await transcribeWithService(service, audioURL: audioURL)
                 return result
             } catch {
-                print("Service \(service) failed: \(error)")
+                await MainActor.run { self.showStatus("\(service.rawValue) failed, trying next...") }
                 continue
             }
         }
@@ -78,8 +83,9 @@ class TranscriptionManager: ObservableObject {
     }
     
     private func transcribeWithOpenAI(audioURL: URL) async throws -> String {
-        // Placeholder for OpenAI Whisper API
-        throw TranscriptionError.serviceNotAvailable("OpenAI Whisper")
+        let service = OpenAIWhisperService()
+        let key = apiManager.getAPIKey(for: .openAI)
+        return try await service.transcribe(apiKey: key, audioURL: audioURL)
     }
     
     private func transcribeWithOpenRouter(audioURL: URL) async throws -> String {
@@ -88,8 +94,9 @@ class TranscriptionManager: ObservableObject {
     }
     
     private func transcribeWithGemini(audioURL: URL) async throws -> String {
-        // Placeholder for Google Gemini API
-        throw TranscriptionError.serviceNotAvailable("Google Gemini")
+        let service = GeminiTranscriptionService()
+        let key = apiManager.getAPIKey(for: .gemini)
+        return try await service.transcribe(apiKey: key, audioURL: audioURL)
     }
     
     private func transcribeWithWhisperLocal(audioURL: URL) async throws -> String {
@@ -131,6 +138,11 @@ class TranscriptionManager: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
             self.showToast = false
         }
+    }
+
+    func showStatus(_ message: String) {
+        statusMessage = message
+        showStatusBanner = true
     }
 }
 

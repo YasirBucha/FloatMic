@@ -4,6 +4,7 @@ import SwiftUI
 class APIManager: ObservableObject {
     @Published var selectedService: ServiceType = .appleIntelligence
     @Published var apiKeys: [ServiceType: String] = [:]
+    @Published var forceLocalWhisperOnly: Bool = false
     
     enum ServiceType: String, CaseIterable {
         case appleIntelligence = "Apple Intelligence"
@@ -41,6 +42,7 @@ class APIManager: ObservableObject {
     init() {
         loadAPIKeys()
         loadSelectedService()
+        forceLocalWhisperOnly = UserDefaults.standard.bool(forKey: "forceLocalWhisperOnly")
     }
     
     func setAPIKey(for service: ServiceType, key: String) {
@@ -57,6 +59,11 @@ class APIManager: ObservableObject {
         UserDefaults.standard.set(service.rawValue, forKey: "selectedService")
     }
     
+    func setForceLocalWhisperOnly(_ value: Bool) {
+        forceLocalWhisperOnly = value
+        UserDefaults.standard.set(value, forKey: "forceLocalWhisperOnly")
+    }
+    
     func isAppleIntelligenceAvailable() -> Bool {
         // Check if Apple Intelligence is available on this system
         if #available(macOS 15.0, *) {
@@ -66,27 +73,23 @@ class APIManager: ObservableObject {
     }
     
     func getAvailableServices() -> [ServiceType] {
+        if forceLocalWhisperOnly { return [.whisperLocal] }
         var services: [ServiceType] = []
         
-        // Add Apple Intelligence if available
-        if isAppleIntelligenceAvailable() {
-            services.append(.appleIntelligence)
-        }
-        
-        // Add other services if they have API keys
-        for service in ServiceType.allCases {
-            if service != .appleIntelligence && service != .whisperLocal {
-                if let _ = apiKeys[service] {
-                    services.append(service)
-                }
-            }
-        }
-        
-        // Always add local Whisper as fallback
+        // Base priority list
+        if isAppleIntelligenceAvailable() { services.append(.appleIntelligence) }
+        if apiKeys[.openAI] != nil { services.append(.openAI) }
+        if apiKeys[.openRouter] != nil { services.append(.openRouter) }
+        if apiKeys[.gemini] != nil { services.append(.gemini) }
         services.append(.whisperLocal)
         
-        // Sort by priority
-        return services.sorted { $0.priority < $1.priority }
+        // If user explicitly selected a service, try it first
+        if let idx = services.firstIndex(of: selectedService) {
+            let preferred = services.remove(at: idx)
+            services.insert(preferred, at: 0)
+        }
+        
+        return services
     }
     
     private func loadAPIKeys() {

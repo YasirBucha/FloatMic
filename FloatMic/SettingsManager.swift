@@ -8,6 +8,7 @@ class SettingsManager: ObservableObject {
     @Published var snapThreshold: CGFloat = 20.0
     @Published var multiDisplayMode: MultiDisplayMode = .rememberPerDisplay
     @Published var displayPositions: [String: NSPoint] = [:]
+    @Published var whisperModelName: String = "ggml-base"
     
     enum ButtonSize: String, CaseIterable {
         case small = "Small"
@@ -72,6 +73,11 @@ class SettingsManager: ObservableObject {
         saveSettings()
     }
     
+    func setWhisperModelName(_ name: String) {
+        whisperModelName = name
+        saveSettings()
+    }
+    
     func setMultiDisplayMode(_ mode: MultiDisplayMode) {
         multiDisplayMode = mode
         saveSettings()
@@ -115,6 +121,10 @@ class SettingsManager: ObservableObject {
            let positions = try? JSONDecoder().decode([String: NSPoint].self, from: data) {
             displayPositions = positions
         }
+        
+        if let model = UserDefaults.standard.string(forKey: "whisperModelName") {
+            whisperModelName = model
+        }
     }
     
     private func saveSettings() {
@@ -128,5 +138,7 @@ class SettingsManager: ObservableObject {
         if let data = try? JSONEncoder().encode(displayPositions) {
             UserDefaults.standard.set(data, forKey: "displayPositions")
         }
+        
+        UserDefaults.standard.set(whisperModelName, forKey: "whisperModelName")
     }
 }

@@ -14,7 +14,6 @@ struct ContentView: View {
                 Circle()
                     .fill(audioRecorder.isRecording ? Color.red : Color(hex: settingsManager.buttonColor))
                     .frame(width: settingsManager.buttonSize.size, height: settingsManager.buttonSize.size)
-                    .glassEffect()
                     .shadow(radius: 8)
                 
                 if audioRecorder.isRecording {
@@ -48,6 +47,22 @@ struct ContentView: View {
                     message: transcriptionManager.toastMessage,
                     isShowing: $transcriptionManager.showToast
                 )
+            }
+            
+            // Status banner
+            if transcriptionManager.showStatusBanner {
+                VStack {
+                    Text(transcriptionManager.statusMessage)
+                        .font(.caption)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color.black.opacity(0.7))
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .padding(.top, 6)
             }
         }
         .frame(width: settingsManager.buttonSize.size, height: settingsManager.buttonSize.size)

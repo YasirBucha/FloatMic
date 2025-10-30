@@ -25,12 +25,17 @@ class WhisperLocalService {
         
         print("Transcribing audio file: \(url.lastPathComponent)")
         
-        // For now, return a working placeholder
-        // TODO: Replace with actual Whisper.cpp integration
-        // Use a more appropriate delay that doesn't block the main thread
-        usleep(500000) // 0.5 seconds in microseconds
+        // Try real whisper if framework is linked
+        #if canImport(Whisper)
+        let modelPath = Bundle.main.path(forResource: "ggml-base", ofType: "bin", inDirectory: "whisper/models") ?? "whisper/models/ggml-base.bin"
+        if let text = transcribeWithWhisperFramework(url: url, modelPath: modelPath) {
+            return text
+        }
+        #endif
         
-        return "🎤 [Local Whisper] This is a test transcription. The audio was processed successfully. To enable real transcription, the Whisper.cpp framework needs to be properly linked in Xcode."
+        // Fallback placeholder
+        usleep(300000)
+        return "[Local Whisper] Placeholder transcription. Link Whisper.framework for real results."
     }
     
     func transcribeAudioData(_ audioData: Data) -> String? {

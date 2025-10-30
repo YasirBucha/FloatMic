@@ -117,6 +117,59 @@ struct PreferencesView: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 8) {
+                    Text("Local Whisper Model")
+                        .fontWeight(.medium)
+                    
+                    HStack {
+                        Text("Model:")
+                        Picker("Whisper Model", selection: Binding(
+                            get: { settingsManager.whisperModelName },
+                            set: { settingsManager.setWhisperModelName($0) }
+                        )) {
+                            Text("Tiny (English)").tag("ggml-tiny.en")
+                            Text("Base").tag("ggml-base")
+                            Text("Base (English)").tag("ggml-base.en")
+                            Text("Small (English)").tag("ggml-small.en")
+                            Text("Medium (English)").tag("ggml-medium.en")
+                            Text("Large v3").tag("ggml-large-v3")
+                        }
+                        .pickerStyle(MenuPickerStyle())
+                    }
+                    let path1 = Bundle.main.path(forResource: settingsManager.whisperModelName, ofType: "bin", inDirectory: "whisper/models")
+                    let path2 = "whisper/models/\(settingsManager.whisperModelName).bin"
+                    let exists = (path1 != nil) || FileManager.default.fileExists(atPath: path2)
+                    if exists {
+                        Text("Model found: \(path1 ?? path2)")
+                            .font(.caption)
+                            .foregroundColor(.green)
+                    } else {
+                        Text("Model missing: expected at whisper/models/\(settingsManager.whisperModelName).bin")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+                    
+                    HStack(spacing: 12) {
+                        Button("Open Models Folder") {
+                            #if canImport(AppKit)
+                            let fm = FileManager.default
+                            let folder = "whisper/models"
+                            var isDir: ObjCBool = false
+                            if fm.fileExists(atPath: folder, isDirectory: &isDir), isDir.boolValue {
+                                NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: folder)
+                            } else {
+                                NSWorkspace.shared.openFile("whisper")
+                            }
+                            #endif
+                        }
+                        
+                        Toggle("Local Whisper only (offline mode)", isOn: Binding(
+                            get: { apiManager.forceLocalWhisperOnly },
+                            set: { apiManager.setForceLocalWhisperOnly($0) }
+                        ))
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Multi-Display Settings")
                         .fontWeight(.medium)
                     
