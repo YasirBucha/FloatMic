@@ -3,9 +3,6 @@ import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var floatingWindow: NSWindow?
-    var modelSelectionWindow: NSWindow?
-    var apiKeysWindow: NSWindow?
-    var historyWindow: NSWindow?
     var preferencesWindow: NSWindow?
     var statusItem: NSStatusItem?
     var audioRecorder: AudioRecorder?
@@ -43,10 +40,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         
         menu.addItem(NSMenuItem(title: "Toggle Floating Mic", action: #selector(toggleFloatingWindow), keyEquivalent: ""))
-        menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Choose Model Source", action: #selector(showModelSelection), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "Manage API Keys", action: #selector(showAPIKeys), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "Transcription History", action: #selector(showHistory), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Preferences", action: #selector(showPreferences), keyEquivalent: ","))
         menu.addItem(NSMenuItem.separator())
@@ -123,114 +116,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         audioRecorder?.toggleRecording()
     }
     
-    @objc func showModelSelection() {
-        // Reuse existing window if it exists
-        if let existingWindow = modelSelectionWindow, existingWindow.isVisible {
-            existingWindow.makeKeyAndOrderFront(nil)
-            return
-        }
-        
-        let modelView = ModelSelectionView()
-            .environmentObject(apiManager!)
-        
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
-            styleMask: [.titled, .closable, .resizable],
-            backing: .buffered,
-            defer: false
-        )
-        
-        window.contentView = NSHostingView(rootView: modelView)
-        window.title = "Choose Model Source"
-        window.center()
-        window.makeKeyAndOrderFront(nil)
-        
-        // Store reference and handle window closing
-        modelSelectionWindow = window
-        
-        // Clean up when window closes
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(modelSelectionWindowWillClose),
-            name: NSWindow.willCloseNotification,
-            object: window
-        )
-    }
-    
-    @objc private func modelSelectionWindowWillClose(_ notification: Notification) {
-        modelSelectionWindow = nil
-    }
-    
-    @objc func showAPIKeys() {
-        // Reuse existing window if it exists
-        if let existingWindow = apiKeysWindow, existingWindow.isVisible {
-            existingWindow.makeKeyAndOrderFront(nil)
-            return
-        }
-        
-        let keysView = APIKeysView()
-            .environmentObject(apiManager!)
-        
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 500, height: 400),
-            styleMask: [.titled, .closable, .resizable],
-            backing: .buffered,
-            defer: false
-        )
-        
-        window.contentView = NSHostingView(rootView: keysView)
-        window.title = "Manage API Keys"
-        window.center()
-        window.makeKeyAndOrderFront(nil)
-        
-        apiKeysWindow = window
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(apiKeysWindowWillClose),
-            name: NSWindow.willCloseNotification,
-            object: window
-        )
-    }
-    
-    @objc private func apiKeysWindowWillClose(_ notification: Notification) {
-        apiKeysWindow = nil
-    }
-    
-    @objc func showHistory() {
-        // Reuse existing window if it exists
-        if let existingWindow = historyWindow, existingWindow.isVisible {
-            existingWindow.makeKeyAndOrderFront(nil)
-            return
-        }
-        
-        let historyView = TranscriptionHistoryView()
-            .environmentObject(historyManager!)
-        
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 600, height: 500),
-            styleMask: [.titled, .closable, .resizable],
-            backing: .buffered,
-            defer: false
-        )
-        
-        window.contentView = NSHostingView(rootView: historyView)
-        window.title = "Transcription History"
-        window.center()
-        window.makeKeyAndOrderFront(nil)
-        
-        historyWindow = window
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(historyWindowWillClose),
-            name: NSWindow.willCloseNotification,
-            object: window
-        )
-    }
-    
-    @objc private func historyWindowWillClose(_ notification: Notification) {
-        historyWindow = nil
-    }
-    
     @objc func showPreferences() {
         // Reuse existing window if it exists
         if let existingWindow = preferencesWindow, existingWindow.isVisible {
@@ -241,9 +126,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let prefsView = PreferencesView()
             .environmentObject(apiManager!)
             .environmentObject(settingsManager!)
+            .environmentObject(historyManager!)
         
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
+            contentRect: NSRect(x: 0, y: 0, width: 700, height: 600),
             styleMask: [.titled, .closable, .resizable],
             backing: .buffered,
             defer: false
@@ -368,9 +254,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         apiManager = nil
         historyManager = nil
         floatingWindow = nil
-        modelSelectionWindow = nil
-        apiKeysWindow = nil
-        historyWindow = nil
         preferencesWindow = nil
         statusItem = nil
     }
