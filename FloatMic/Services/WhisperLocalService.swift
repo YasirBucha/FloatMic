@@ -27,9 +27,22 @@ class WhisperLocalService {
         
         // Try real whisper if framework is linked
         #if canImport(Whisper)
-        let modelPath = Bundle.main.path(forResource: "ggml-base", ofType: "bin", inDirectory: "whisper/models") ?? "whisper/models/ggml-base.bin"
-        if let text = transcribeWithWhisperFramework(url: url, modelPath: modelPath) {
-            return text
+        // Use the model name from the service or fallback to default
+        let preferred = modelName.hasPrefix("ggml-") ? modelName : "ggml-\(modelName)"
+        
+        // Try multiple potential paths
+        let pathsToTry = [
+            Bundle.main.path(forResource: preferred, ofType: "bin", inDirectory: "whisper/models"),
+            Bundle.main.path(forResource: modelName, ofType: "bin", inDirectory: "whisper/models"),
+            "whisper/models/\(preferred).bin",
+            "whisper/models/\(modelName).bin"
+        ].compactMap { $0 }
+        
+        for modelPath in pathsToTry {
+            if FileManager.default.fileExists(atPath: modelPath),
+               let text = transcribeWithWhisperFramework(url: url, modelPath: modelPath) {
+                return text
+            }
         }
         #endif
         

@@ -16,46 +16,47 @@ struct APIKeysView: View {
                 .foregroundColor(.secondary)
             
             VStack(alignment: .leading, spacing: 16) {
-                ForEach(APIManager.ServiceType.allCases, id: \.self) { service in
+                // Only show services that require API keys
+                ForEach(APIManager.ServiceType.allCases.filter { service in
+                    // Exclude services that don't need API keys
+                    service != .appleIntelligence && service != .whisperLocal
+                }, id: \.self) { service in
                     VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text(service.rawValue)
-                                .fontWeight(.medium)
-                            
-                            if service == .appleIntelligence {
-                                Text("RECOMMENDED")
-                                    .font(.caption)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.blue)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 2)
-                                    .background(Color.blue.opacity(0.1))
-                                    .cornerRadius(4)
-                            }
-                        }
+                        Text(service.rawValue)
+                            .fontWeight(.medium)
                         
-                        if service == .appleIntelligence {
-                            Text("No API key required - uses Apple's built-in AI")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .padding(.bottom, 8)
-                        } else {
-                            HStack {
-                                SecureField("Enter API key", text: Binding(
-                                    get: { apiKeys[service] ?? "" },
-                                    set: { apiKeys[service] = $0 }
-                                ))
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                
-                                Button("Save") {
-                                    saveAPIKey(for: service)
-                                }
-                                .buttonStyle(.borderedProminent)
+                        HStack {
+                            SecureField("Enter API key", text: Binding(
+                                get: { apiKeys[service] ?? "" },
+                                set: { apiKeys[service] = $0 }
+                            ))
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            
+                            Button("Save") {
+                                saveAPIKey(for: service)
                             }
+                            .buttonStyle(.borderedProminent)
                         }
                     }
                     .padding(.vertical, 8)
                 }
+                
+                // Add informational note about services that don't need keys
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Note:")
+                        .fontWeight(.medium)
+                        .foregroundColor(.secondary)
+                    
+                    Text("• Apple Intelligence: No API key required - uses built-in AI")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Text("• Local Whisper: No API key required - runs offline on your device")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.top, 16)
+                .padding(.bottom, 8)
             }
             
             Spacer()
@@ -73,7 +74,8 @@ struct APIKeysView: View {
     }
     
     private func loadAPIKeys() {
-        for service in APIManager.ServiceType.allCases {
+        // Only load keys for services that require them
+        for service in APIManager.ServiceType.allCases.filter({ $0 != .appleIntelligence && $0 != .whisperLocal }) {
             if let key = apiManager.getAPIKey(for: service) {
                 apiKeys[service] = key
             }

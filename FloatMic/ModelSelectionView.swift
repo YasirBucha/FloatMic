@@ -2,11 +2,6 @@ import SwiftUI
 
 struct ModelSelectionView: View {
     @EnvironmentObject var apiManager: APIManager
-    @State private var selectedService: APIManager.ServiceType
-    
-    init() {
-        _selectedService = State(initialValue: .appleIntelligence)
-    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -21,12 +16,14 @@ struct ModelSelectionView: View {
                 ForEach(APIManager.ServiceType.allCases, id: \.self) { service in
                     HStack {
                         Button(action: {
-                            selectedService = service
-                            apiManager.setSelectedService(service)
+                            // Use async dispatch to avoid animation conflicts
+                            DispatchQueue.main.async {
+                                apiManager.setSelectedService(service)
+                            }
                         }) {
                             HStack {
-                                Image(systemName: selectedService == service ? "checkmark.circle.fill" : "circle")
-                                    .foregroundColor(selectedService == service ? .blue : .gray)
+                                Image(systemName: apiManager.selectedService == service ? "checkmark.circle.fill" : "circle")
+                                    .foregroundColor(apiManager.selectedService == service ? .blue : .gray)
                                 
                                 VStack(alignment: .leading, spacing: 4) {
                                     HStack {
@@ -56,7 +53,7 @@ struct ModelSelectionView: View {
                             .padding(.horizontal, 12)
                             .background(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(selectedService == service ? Color.blue.opacity(0.1) : Color.clear)
+                                    .fill(apiManager.selectedService == service ? Color.blue.opacity(0.1) : Color.clear)
                             )
                         }
                         .buttonStyle(PlainButtonStyle())

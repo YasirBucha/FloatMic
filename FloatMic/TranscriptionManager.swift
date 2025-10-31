@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import Combine
 
 class TranscriptionManager: ObservableObject {
     @Published var isTranscribing = false
@@ -77,9 +78,12 @@ class TranscriptionManager: ObservableObject {
     }
     
     private func transcribeWithAppleIntelligence(audioURL: URL) async throws -> String {
-        // Placeholder for Apple Intelligence integration
-        // This would use Foundation Models framework when available
-        throw TranscriptionError.serviceNotAvailable("Apple Intelligence")
+        if #available(macOS 15.0, *) {
+            let service = AppleIntelligenceService()
+            return try await service.transcribe(audioURL: audioURL)
+        } else {
+            throw TranscriptionError.serviceNotAvailable("Apple Intelligence requires macOS 15.0 or later")
+        }
     }
     
     private func transcribeWithOpenAI(audioURL: URL) async throws -> String {
@@ -89,8 +93,9 @@ class TranscriptionManager: ObservableObject {
     }
     
     private func transcribeWithOpenRouter(audioURL: URL) async throws -> String {
-        // Placeholder for OpenRouter API
-        throw TranscriptionError.serviceNotAvailable("OpenRouter")
+        let service = OpenRouterTranscriptionService()
+        let key = apiManager.getAPIKey(for: .openRouter)
+        return try await service.transcribe(apiKey: key, audioURL: audioURL)
     }
     
     private func transcribeWithGemini(audioURL: URL) async throws -> String {
@@ -100,8 +105,20 @@ class TranscriptionManager: ObservableObject {
     }
     
     private func transcribeWithWhisperLocal(audioURL: URL) async throws -> String {
-        // Use the actual WhisperLocalService
-        let whisperService = WhisperLocalService()
+        // Get the selected model name from settings
+        let modelName = UserDefaults.standard.string(forKey: "whisperModelName") ?? "ggml-base"
+        
+        // Extract base model name (remove .bin extension if present, handle ggml- prefix)
+        let baseModelName: String
+        if modelName.hasPrefix("ggml-") {
+            baseModelName = modelName
+        } else if modelName.hasSuffix(".bin") {
+            baseModelName = String(modelName.dropLast(4))
+        } else {
+            baseModelName = modelName
+        }
+        
+        let whisperService = WhisperLocalService(modelName: baseModelName)
         
         guard whisperService.initialize() else {
             throw TranscriptionError.serviceNotAvailable("Local Whisper - Failed to initialize")
@@ -109,6 +126,11 @@ class TranscriptionManager: ObservableObject {
         
         guard let result = whisperService.transcribeAudioFile(url: audioURL) else {
             throw TranscriptionError.serviceNotAvailable("Local Whisper - Transcription failed")
+        }
+        
+        // Check if result is a placeholder
+        if result.contains("Placeholder transcription") {
+            throw TranscriptionError.serviceNotAvailable("Local Whisper - Model not found. Please download a Whisper model.")
         }
         
         return result
