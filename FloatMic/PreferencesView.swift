@@ -120,8 +120,13 @@ struct GeneralPreferencesTab: View {
             VStack(spacing: 20) {
                 // Button Settings Section
                 PreferenceSection(title: "Button Settings", icon: "circle.fill") {
-                    VStack(spacing: 16) {
-                        PreferenceRow(label: "Size", labelWidth: 120) {
+                    VStack(spacing: 10) {
+                        HStack(alignment: .center, spacing: 16) {
+                            Text("Size")
+                                .font(.system(.body))
+                                .foregroundColor(.primary)
+                                .frame(width: 100, alignment: .leading)
+                            
                             Picker("Button Size", selection: Binding(
                                 get: { settingsManager.buttonSize },
                                 set: { settingsManager.setButtonSize($0) }
@@ -130,11 +135,19 @@ struct GeneralPreferencesTab: View {
                                     Text(size.rawValue).tag(size)
                                 }
                             }
-                            .pickerStyle(SegmentedPickerStyle())
+                            .pickerStyle(.segmented)
                             .frame(maxWidth: 200)
+                            
+                            Spacer()
                         }
+                        .padding(.vertical, 2)
                         
-                        PreferenceRow(label: "Color", labelWidth: 120) {
+                        HStack(alignment: .center, spacing: 16) {
+                            Text("Color")
+                                .font(.system(.body))
+                                .foregroundColor(.primary)
+                                .frame(width: 100, alignment: .leading)
+                            
                             HStack(spacing: 12) {
                                 TextField("Hex Color", text: Binding(
                                     get: { settingsManager.buttonColor },
@@ -145,36 +158,55 @@ struct GeneralPreferencesTab: View {
                                 
                                 Circle()
                                     .fill(Color(hex: settingsManager.buttonColor))
-                                    .frame(width: 32, height: 32)
+                                    .frame(width: 28, height: 28)
                                     .overlay(
                                         Circle()
                                             .stroke(Color.primary.opacity(0.1), lineWidth: 1.5)
                                     )
                                     .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
                             }
+                            
+                            Spacer()
                         }
+                        .padding(.vertical, 2)
                         
-                        PreferenceRow(label: "Edge Snapping", labelWidth: 120) {
+                        HStack(alignment: .center, spacing: 16) {
+                            Text("Edge Snapping")
+                                .font(.system(.body))
+                                .foregroundColor(.primary)
+                                .frame(width: 100, alignment: .leading)
+                            
                             Toggle("", isOn: Binding(
                                 get: { settingsManager.enableEdgeSnapping },
                                 set: { settingsManager.setEdgeSnapping($0) }
                             ))
                             .toggleStyle(.switch)
+                            
+                            Spacer()
                         }
+                        .padding(.vertical, 2)
                         
                         if settingsManager.enableEdgeSnapping {
-                            PreferenceRow(label: "Snap Distance", labelWidth: 120) {
+                            HStack(alignment: .center, spacing: 16) {
+                                Text("Snap Distance")
+                                    .font(.system(.body))
+                                    .foregroundColor(.primary)
+                                    .frame(width: 100, alignment: .leading)
+                                
                                 HStack(spacing: 12) {
                                     Slider(value: Binding(
                                         get: { settingsManager.snapThreshold },
                                         set: { settingsManager.setSnapThreshold($0) }
                                     ), in: 10...50)
                                     Text("\(Int(settingsManager.snapThreshold))px")
-                                        .font(.system(.body, design: .monospaced))
+                                        .font(.system(.caption, design: .monospaced))
                                         .foregroundColor(.secondary)
-                                        .frame(width: 50, alignment: .trailing)
+                                        .frame(width: 45, alignment: .trailing)
                                 }
+                                
+                                Spacer()
                             }
+                            .padding(.vertical, 2)
                         }
                     }
                 }
