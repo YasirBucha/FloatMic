@@ -71,14 +71,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         floatingWindow?.collectionBehavior = [.canJoinAllSpaces, .stationary]
         floatingWindow?.isMovableByWindowBackground = true
         
-        // Position window - restore from saved position or center on screen
+        // Position window - restore from saved position or default to bottom-right
         if let savedPosition = loadWindowPosition() {
             floatingWindow?.setFrameOrigin(savedPosition)
         } else if let screen = NSScreen.main {
             let screenFrame = screen.visibleFrame
             let windowSize = floatingWindow!.frame.size
-            let x = (screenFrame.width - windowSize.width) / 2
-            let y = (screenFrame.height - windowSize.height) / 2
+            let padding: CGFloat = 20
+            // Position at bottom-right with adequate padding
+            let x = screenFrame.maxX - windowSize.width - padding
+            let y = screenFrame.minY + padding
             floatingWindow?.setFrameOrigin(NSPoint(x: x, y: y))
         }
         

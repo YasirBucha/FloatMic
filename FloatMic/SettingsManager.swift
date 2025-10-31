@@ -11,6 +11,7 @@ class SettingsManager: ObservableObject {
     @Published var multiDisplayMode: MultiDisplayMode = .rememberPerDisplay
     @Published var displayPositions: [String: NSPoint] = [:]
     @Published var whisperModelName: String = "ggml-base"
+    @Published var launchAtLogin: Bool = false
     
     enum ButtonSize: String, CaseIterable {
         case small = "Small"
@@ -85,6 +86,17 @@ class SettingsManager: ObservableObject {
         saveSettings()
     }
     
+    func setLaunchAtLogin(_ enabled: Bool) {
+        launchAtLogin = enabled
+        if #available(macOS 13.0, *) {
+            LaunchAtLoginHelper.shared.setEnabled(enabled)
+        } else {
+            // Fallback for older macOS versions
+            print("Launch at login requires macOS 13.0 or later")
+        }
+        saveSettings()
+    }
+    
     func setPositionForDisplay(_ position: NSPoint, displayID: String) {
         displayPositions[displayID] = position
         saveSettings()
@@ -127,6 +139,15 @@ class SettingsManager: ObservableObject {
         if let model = UserDefaults.standard.string(forKey: "whisperModelName") {
             whisperModelName = model
         }
+        
+        launchAtLogin = UserDefaults.standard.bool(forKey: "launchAtLogin")
+        // Sync with actual login items on load (macOS 13.0+)
+        if #available(macOS 13.0, *) {
+            let actualState = LaunchAtLoginHelper.shared.isEnabled()
+            if launchAtLogin != actualState {
+                launchAtLogin = actualState
+            }
+        }
     }
     
     private func saveSettings() {
@@ -135,6 +156,7 @@ class SettingsManager: ObservableObject {
         UserDefaults.standard.set(enableEdgeSnapping, forKey: "enableEdgeSnapping")
         UserDefaults.standard.set(snapThreshold, forKey: "snapThreshold")
         UserDefaults.standard.set(multiDisplayMode.rawValue, forKey: "multiDisplayMode")
+        UserDefaults.standard.set(launchAtLogin, forKey: "launchAtLogin")
         
         // Save display positions
         if let data = try? JSONEncoder().encode(displayPositions) {

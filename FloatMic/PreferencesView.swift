@@ -58,6 +58,83 @@ struct PreferenceRow<Content: View>: View {
     }
 }
 
+struct ModelStatusView: View {
+    let modelName: String
+    
+    private var modelStatus: (exists: Bool, path: String?) {
+        let modelFileName = "\(modelName).bin"
+        
+        // 1. Check in app bundle
+        if let bundlePath = Bundle.main.path(forResource: modelName, ofType: "bin", inDirectory: "whisper/models") {
+            return (true, bundlePath)
+        }
+        // 2. Check in app bundle root
+        if let bundlePath = Bundle.main.path(forResource: modelFileName, ofType: nil) {
+            return (true, bundlePath)
+        }
+        // 3. Check in Application Support
+        if let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+            let appSupportPath = appSupport.appendingPathComponent("FloatMic/whisper/models/\(modelFileName)").path
+            if FileManager.default.fileExists(atPath: appSupportPath) {
+                return (true, appSupportPath)
+            }
+        }
+        // 4. Check in Documents directory
+        if let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+            let documentsPath = documents.appendingPathComponent("whisper/models/\(modelFileName)").path
+            if FileManager.default.fileExists(atPath: documentsPath) {
+                return (true, documentsPath)
+            }
+        }
+        // 5. Check in project directory (development)
+        let devPaths = [
+            "whisper/models/\(modelFileName)",
+            "../whisper/models/\(modelFileName)",
+            "../../whisper/models/\(modelFileName)"
+        ]
+        for devPath in devPaths {
+            let resolvedPath = (devPath as NSString).standardizingPath
+            if FileManager.default.fileExists(atPath: resolvedPath) {
+                return (true, resolvedPath)
+            }
+        }
+        
+        return (false, nil)
+    }
+    
+    var body: some View {
+        let status = modelStatus
+        let modelFileName = "\(modelName).bin"
+        
+        HStack(spacing: 8) {
+            Image(systemName: status.exists ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                .foregroundColor(status.exists ? .green : .orange)
+                .font(.caption)
+            
+            Text(status.exists ? "Model found" : "Model missing")
+                .font(.caption)
+                .foregroundColor(status.exists ? .green : .orange)
+            
+            if !status.exists {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("• \(modelFileName)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text("Expected in app bundle or Application Support")
+                        .font(.caption2)
+                        .foregroundColor(.secondary.opacity(0.7))
+                }
+            } else if let path = status.path {
+                Text("• \(URL(fileURLWithPath: path).lastPathComponent)")
+                    .font(.caption2)
+                    .foregroundColor(.secondary.opacity(0.7))
+                    .lineLimit(1)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
 struct PreferencesView: View {
     @EnvironmentObject var apiManager: APIManager
     @EnvironmentObject var settingsManager: SettingsManager
@@ -230,26 +307,7 @@ struct GeneralPreferencesTab: View {
                             .frame(maxWidth: 200)
                         }
                         
-                        let path1 = Bundle.main.path(forResource: settingsManager.whisperModelName, ofType: "bin", inDirectory: "whisper/models")
-                        let path2 = "whisper/models/\(settingsManager.whisperModelName).bin"
-                        let exists = (path1 != nil) || FileManager.default.fileExists(atPath: path2)
-                        
-                        HStack(spacing: 8) {
-                            Image(systemName: exists ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                                .foregroundColor(exists ? .green : .orange)
-                                .font(.caption)
-                            
-                            Text(exists ? "Model found" : "Model missing")
-                                .font(.caption)
-                                .foregroundColor(exists ? .green : .orange)
-                            
-                            if !exists {
-                                Text("• \(settingsManager.whisperModelName).bin")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        ModelStatusView(modelName: settingsManager.whisperModelName)
                         
                         HStack(spacing: 12) {
                             Button {
@@ -278,6 +336,25 @@ struct GeneralPreferencesTab: View {
                             .toggleStyle(.switch)
                         }
                     }
+                }
+                
+                // Launch at Login Section
+                PreferenceSection(title: "Startup", icon: "power") {
+                    HStack(alignment: .center, spacing: 16) {
+                        Text("Launch at Login")
+                            .font(.system(.body))
+                            .foregroundColor(.primary)
+                            .frame(width: 100, alignment: .leading)
+                        
+                        Toggle("", isOn: Binding(
+                            get: { settingsManager.launchAtLogin },
+                            set: { settingsManager.setLaunchAtLogin($0) }
+                        ))
+                        .toggleStyle(.switch)
+                        
+                        Spacer()
+                    }
+                    .padding(.vertical, 2)
                 }
                 
                 // Multi-Display Settings Section
