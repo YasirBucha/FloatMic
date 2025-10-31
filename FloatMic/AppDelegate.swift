@@ -67,7 +67,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         floatingWindow?.backgroundColor = .clear
         floatingWindow?.isOpaque = false
         floatingWindow?.hasShadow = true
-        floatingWindow?.level = .floating
+        floatingWindow?.level = .screenSaver
         floatingWindow?.collectionBehavior = [.canJoinAllSpaces, .stationary]
         floatingWindow?.isMovableByWindowBackground = true
         
